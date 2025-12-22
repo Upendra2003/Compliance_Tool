@@ -32,3 +32,5 @@ uv==0.9.18
 gunicorn
 flask
 groq
+python-dotenv
+faiss-cpu
