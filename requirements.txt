@@ -31,3 +31,4 @@ urllib3==2.6.2
 uv==0.9.18
 gunicorn
 flask
+groq
