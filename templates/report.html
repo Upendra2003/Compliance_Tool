@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DPDP Compliance Report - {{ provider|capitalize }}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/report.css') }}"
+    />
+  </head>
+  <body>
+    <div class="header">
+      <h1>DPDP Act Compliance Report</h1>
+      <div class="header-actions">
+        <button id="downloadBtn" class="btn btn-download">
+          Download Report (PDF)
+        </button>
+        <a href="/" class="btn btn-back">← Back to Home</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Table A: Overall Summary -->
+      <section class="scorecard-section">
+        <h2 class="section-title">Executive Summary</h2>
+        <div id="summary-table">
+          <!-- Populated by JavaScript -->
+        </div>
+      </section>
+
+      <!-- Table B: Category Scorecard -->
+      <section class="scorecard-section">
+        <h2 class="section-title">DPDP Category Scorecard</h2>
+        <div id="category-table">
+          <!-- Populated by JavaScript -->
+        </div>
+      </section>
+
+      <!-- Table C: Detailed Breakdown (Dynamic for all categories) -->
+      <section class="scorecard-section">
+        <h2 class="section-title">Detailed Breakdown by Category</h2>
+        <div id="category-tabs">
+          <!-- Populated by JavaScript -->
+        </div>
+        <div id="breakdown-content">
+          <!-- Populated by JavaScript based on selected tab -->
+        </div>
+      </section>
+
+      <!-- Footer Note -->
+      <div class="footer-note">
+        <p>
+          <strong>Note:</strong> This is an automated compliance analysis based
+          on the Digital Personal Data Protection Act, 2023. All 5 implemented
+          categories are: "Notice & Transparency", "Consent Management", "Data
+          Minimization", "Retention", and "Deletion". This report evaluates
+          compliance across these key DPDP requirements and should be used for
+          informational purposes only. It does not constitute legal advice.
+        </p>
+      </div>
+    </div>
+
+    <!-- Load scoring data from sessionStorage -->
+    <script>
+      // Load data from sessionStorage (set by frontend after checks complete)
+      const scoringDataStr = sessionStorage.getItem('scoringData');
+      const providerName = sessionStorage.getItem('provider');
+
+      let scoringData = null;
+
+      if (scoringDataStr) {
+        try {
+          scoringData = JSON.parse(scoringDataStr);
+          console.log("Scoring Data loaded from sessionStorage:", scoringData);
+          console.log("Provider:", providerName);
+        } catch (e) {
+          console.error("Failed to parse scoring data:", e);
+        }
+      } else {
+        console.error("No scoring data found in sessionStorage");
+      }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/report.js') }}"></script>
+  </body>
+</html>

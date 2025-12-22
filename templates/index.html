@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DPDP Act Compliance Checker</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <img
+          src="{{ url_for('static', filename='assets/logo.png') }}"
+          alt=""
+          width="50"
+        />
+        <h1>RComp</h1>
+      </div>
+      <a href="">DPDP Rules</a>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h2>Check AI Provider Compliance with India's DPDP Act</h2>
+        <p>
+          Analyze privacy policies of major AI providers to ensure they meet the
+          requirements of the Digital Personal Data Protection Act, 2023.
+        </p>
+      </section>
+
+      <!-- Selection Section -->
+      <section class="selection-section">
+        <h3>Select an AI Provider to Check</h3>
+
+        <div class="provider-grid">
+          <!-- ChatGPT -->
+          <div class="provider-card" onclick="sendPolicyId(1)">
+            <img
+              src="{{ url_for('static', filename='assets/chatgpt.png') }}"
+              alt="ChatGPT"
+              class="provider-logo"
+            />
+            <div class="provider-name">ChatGPT</div>
+            <div class="provider-description">
+              OpenAI's conversational AI assistant
+            </div>
+          </div>
+
+          <!-- Claude -->
+          <div class="provider-card" onclick="sendPolicyId(2)">
+            <img
+              src="{{ url_for('static', filename='assets/claude.png') }}"
+              alt="Claude"
+              class="provider-logo"
+            />
+            <div class="provider-name">Claude</div>
+            <div class="provider-description">
+              Anthropic's AI assistant focused on safety
+            </div>
+          </div>
+
+          <!-- Gemini -->
+          <div class="provider-card" onclick="sendPolicyId(3)">
+            <img
+              src="{{ url_for('static', filename='assets/gemini.png') }}"
+              alt="Gemini"
+              class="provider-logo"
+            />
+            <div class="provider-name">Gemini</div>
+            <div class="provider-description">
+              Google's multimodal AI platform
+            </div>
+          </div>
+
+          <!-- Grok -->
+          <div class="provider-card" onclick="sendPolicyId(4)">
+            <img
+              src="{{ url_for('static', filename='assets/grok.png') }}"
+              alt="Grok"
+              class="provider-logo"
+            />
+            <div class="provider-name">Grok</div>
+            <div class="provider-description">
+              xAI's conversational AI system
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>
+        Built for DPDP Act Compliance Analysis &copy; 2026 |
+        <a
+          href="https://www.meity.gov.in/writereaddata/files/Digital%20Personal%20Data%20Protection%20Act%202023.pdf"
+          target="_blank"
+        >
+          Learn more about DPDP Act
+        </a>
+        |
+        <a href="https://rishalab.in/">By Risha Labs</a>
+      </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>

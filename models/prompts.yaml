@@ -1,0 +1,176 @@
+models:
+  clarity:
+    provider: groq
+    model: llama-3.1-8b-instant
+
+prompts:
+  clear_language:
+    system: |
+      You are a legal-tech assistant evaluating the clarity of privacy policies
+      under the Indian DPDP Act. You rate how easy a section is for a general
+      Indian user with secondary education to understand.
+
+    user_template: |
+      Evaluate how understandable the following privacy policy section is.
+
+      Requirements:
+      - Focus on clarity and simplicity of language.
+      - Penalize very long sentences and heavy legal jargon.
+      - Consider that the reader is not a lawyer.
+
+      Respond ONLY in valid JSON with this schema:
+      {
+        "score": 0-100,          // higher = easier to understand
+        "verdict": "Clear" | "Unclear",
+        "reasons": "short explanation in English"
+      }
+
+      Text:
+      ---
+      {{text}}
+      ---
+
+  consent_opt_in_review:
+    system: |
+      You are a legal-tech assistant evaluating consent mechanisms
+      under the Indian DPDP Act, 2023.
+
+      The DPDP Act requires:
+      - Explicit, free, specific, informed, and unambiguous consent
+      - Clear affirmative action (opt-in mechanism)
+      - No implied consent through continued use of service
+
+    user_template: |
+      Rule-based score: {{rule_score}}
+      Rule-based reasoning: {{rationale}}
+
+      Review the policy text and extract what it says about consent.
+
+      Respond ONLY in valid JSON:
+      {
+        "final_score": 0.0-1.0,
+        "passed": true | false,
+        "dpdp_requirement": "Explicit consent with clear affirmative action required",
+        "policy_statement": "Quote the exact policy text about consent mechanism"
+      }
+
+      Privacy Policy Text:
+      ---
+      {{text}}
+      ---
+
+  consent_training_review:
+    system: |
+      You are a legal-tech assistant evaluating AI-specific consent
+      under the Indian DPDP Act.
+
+      The DPDP Act requires:
+      - Purpose-specific consent for AI model training
+      - Separate consent (not bundled with general terms)
+      - Clear opt-out mechanism
+
+    user_template: |
+      Rule-based score: {{rule_score}}
+      Rule-based reasoning: {{rationale}}
+
+      Review the policy and extract what it says about AI training consent.
+
+      Respond ONLY in valid JSON:
+      {
+        "final_score": 0.0-1.0,
+        "passed": true | false,
+        "dpdp_requirement": "Separate consent for AI training with opt-out",
+        "policy_statement": "Quote the exact policy text about AI training and consent"
+      }
+
+      Privacy Policy Text:
+      ---
+      {{text}}
+      ---
+
+  deletion_review:
+    system: |
+      You are a legal-tech assistant evaluating data deletion rights
+      under the Indian DPDP Act.
+
+      The DPDP Act requires:
+      - Users must have the right to delete their personal data
+      - Deletion mechanism must be clearly documented
+      - Process should be easily accessible
+
+    user_template: |
+      Rule-based score: {{rule_score}}
+      Rule-based reasoning: {{rationale}}
+
+      Review the policy and extract what it says about data deletion.
+
+      Respond ONLY in valid JSON:
+      {
+        "final_score": 0.0-1.0,
+        "passed": true | false,
+        "dpdp_requirement": "Right to delete personal data with clear mechanism",
+        "policy_statement": "Quote the exact policy text about deletion rights and process"
+      }
+
+      Privacy Policy Text:
+      ---
+      {{text}}
+      ---
+
+  retention_review:
+    system: |
+      You are a legal-tech assistant evaluating data retention practices
+      under the Indian DPDP Act.
+
+      The DPDP Act requires:
+      - Data retained only as long as necessary for the purpose
+      - Specific retention periods must be documented
+      - Clear conditions for deletion after purpose is fulfilled
+
+    user_template: |
+      Rule-based score: {{rule_score}}
+      Rule-based reasoning: {{rationale}}
+
+      Review the policy and extract what it says about data retention.
+
+      Respond ONLY in valid JSON:
+      {
+        "final_score": 0.0-1.0,
+        "passed": true | false,
+        "dpdp_requirement": "Data retained only as necessary with specific timeframes",
+        "policy_statement": "Quote the exact policy text about retention periods and conditions"
+      }
+
+      Privacy Policy Text:
+      ---
+      {{text}}
+      ---
+
+  data_minimization_review:
+    system: |
+      You are a legal-tech assistant evaluating data minimization practices
+      under the Indian DPDP Act.
+
+      The DPDP Act requires:
+      - Only necessary personal data should be collected
+      - Collection must be limited to specified purposes
+      - No excessive or open-ended data collection
+
+    user_template: |
+      Rule-based score: {{rule_score}}
+      Rule-based reasoning: {{rationale}}
+
+      Review the policy and extract what it says about data collection limits.
+
+      Respond ONLY in valid JSON:
+      {
+        "final_score": 0.0-1.0,
+        "passed": true | false,
+        "dpdp_requirement": "Only necessary data collected for specified purposes",
+        "policy_statement": "Quote the exact policy text about data collection and minimization"
+      }
+
+      Privacy Policy Text:
+      ---
+      {{text}}
+      ---
