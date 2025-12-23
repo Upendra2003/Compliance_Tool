@@ -73,6 +73,9 @@ function sendPolicyId(policyId) {
             }
         };
 
+        let errorShown = false;
+        let lastUpdateTime = Date.now();
+
         eventSource.onerror = function(error) {
             console.error("FRONTEND: SSE connection error:", error);
             console.log("FRONTEND: EventSource readyState:", eventSource.readyState);
@@ -80,19 +83,44 @@ function sendPolicyId(policyId) {
             // Only show error if connection actually failed (not just closed after completion)
             if (eventSource.readyState === EventSource.CLOSED) {
                 console.log("FRONTEND: SSE connection closed");
-                // Don't show error alert - might be normal completion
-            } else {
-                eventSource.close();
-                hideProgressModal();
-                alert("Connection error. Please try again.");
 
-                // Reset loading states
-                cards.forEach(card => {
-                    card.classList.remove('loading');
-                    card.style.opacity = '1';
-                    card.style.pointerEvents = 'auto';
-                });
+                // Check if we got updates recently - if so, this might be normal closure
+                const timeSinceLastUpdate = Date.now() - lastUpdateTime;
+                if (timeSinceLastUpdate > 45000 && !errorShown) {
+                    // No updates for 45 seconds - likely a real error
+                    errorShown = true;
+                    hideProgressModal();
+                    alert("Connection lost. The server might still be processing. Please refresh and try again.");
+
+                    // Reset loading states
+                    cards.forEach(card => {
+                        card.classList.remove('loading');
+                        card.style.opacity = '1';
+                        card.style.pointerEvents = 'auto';
+                    });
+                }
+            } else {
+                if (!errorShown) {
+                    errorShown = true;
+                    eventSource.close();
+                    hideProgressModal();
+                    alert("Connection error. Please try again.");
+
+                    // Reset loading states
+                    cards.forEach(card => {
+                        card.classList.remove('loading');
+                        card.style.opacity = '1';
+                        card.style.pointerEvents = 'auto';
+                    });
+                }
             }
+        };
+
+        // Track last update time for timeout detection
+        const originalOnMessage = eventSource.onmessage;
+        eventSource.onmessage = function(event) {
+            lastUpdateTime = Date.now();
+            originalOnMessage.call(this, event);
         };
 
         // Step 3: Start the actual check process

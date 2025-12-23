@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: dpdp-compliance-checker
+    env: docker
+    plan: free  # Change to 'starter' or higher for production
+    region: singapore  # or oregon, frankfurt, etc.
+    branch: master  # or main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false  # Set this manually in Render dashboard
+      - key: PORT
+        value: 5000
+      - key: PYTHON_VERSION
+        value: 3.12
+    buildCommand: python -m utils.vector_store.build_index
+    startCommand: gunicorn --config gunicorn.conf.py app:app
+    healthCheckPath: /
