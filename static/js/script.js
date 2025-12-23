@@ -32,7 +32,14 @@ function sendPolicyId(policyId) {
         console.log("FRONTEND: Session ID received:", sessionId);
 
         // Step 2: Connect to SSE for progress updates
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 3;
         const eventSource = new EventSource(`/progress/${sessionId}`);
+
+        eventSource.onopen = function() {
+            console.log("FRONTEND: SSE connection opened successfully");
+            reconnectAttempts = 0; // Reset on successful connection
+        };
 
         eventSource.onmessage = function(event) {
             const update = JSON.parse(event.data);
@@ -75,10 +82,35 @@ function sendPolicyId(policyId) {
 
         let errorShown = false;
         let lastUpdateTime = Date.now();
+        let connectionEstablished = false;
 
         eventSource.onerror = function(error) {
             console.error("FRONTEND: SSE connection error:", error);
             console.log("FRONTEND: EventSource readyState:", eventSource.readyState);
+
+            // If connection was never established, increment retry attempts
+            if (!connectionEstablished && eventSource.readyState === EventSource.CLOSED) {
+                reconnectAttempts++;
+                console.log(`FRONTEND: Connection attempt ${reconnectAttempts}/${maxReconnectAttempts} failed`);
+
+                if (reconnectAttempts >= maxReconnectAttempts) {
+                    console.error("FRONTEND: Max reconnection attempts reached");
+                    errorShown = true;
+                    eventSource.close();
+                    hideProgressModal();
+                    alert("Unable to connect to server. Please check your internet connection and try again.");
+
+                    // Reset loading states
+                    cards.forEach(card => {
+                        card.classList.remove('loading');
+                        card.style.opacity = '1';
+                        card.style.pointerEvents = 'auto';
+                    });
+                } else {
+                    updateProgress(`Connection attempt ${reconnectAttempts}... retrying...`, 'processing');
+                }
+                return;
+            }
 
             // Only show error if connection actually failed (not just closed after completion)
             if (eventSource.readyState === EventSource.CLOSED) {
@@ -116,10 +148,11 @@ function sendPolicyId(policyId) {
             }
         };
 
-        // Track last update time for timeout detection
+        // Track last update time for timeout detection and mark connection as established
         const originalOnMessage = eventSource.onmessage;
         eventSource.onmessage = function(event) {
             lastUpdateTime = Date.now();
+            connectionEstablished = true; // Mark connection as successful
             originalOnMessage.call(this, event);
         };
 

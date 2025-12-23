@@ -45,18 +45,34 @@ def send_number():
     # Return session ID immediately so frontend can start listening to progress
     return jsonify({"session_id": session_id, "policy_id": policy_id})
 
-@app.route("/progress/<session_id>")
+@app.route("/progress/<session_id>", methods=['GET', 'OPTIONS'])
 def progress_stream(session_id):
     """Server-Sent Events endpoint for progress updates"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        return response
+
     @stream_with_context
     def generate():
         import time
 
         print(f"SSE: Client connected to session {session_id}")
 
-        # Send initial connection message and flush
+        # Send initial connection message with retry field and flush immediately
+        # The retry field helps EventSource reconnect if connection drops
+        yield "retry: 10000\n"
         yield f"data: {json.dumps({'type': 'connected', 'data': {'message': 'Connected to progress stream'}})}\n\n"
-        sys.stdout.flush()
+
+        # Force flush to ensure message is sent immediately (critical for Render)
+        try:
+            import sys
+            sys.stdout.flush()
+        except:
+            pass
 
         last_index = 0
         max_wait = 6000  # Maximum 600 seconds (10 minutes) with 0.1s sleep
@@ -99,10 +115,18 @@ def progress_stream(session_id):
         yield f"data: {json.dumps({'type': 'error', 'data': {'message': 'Session timeout'}})}\n\n"
 
     response = Response(generate(), mimetype='text/event-stream')
+    # Essential headers for SSE streaming
     response.headers['Cache-Control'] = 'no-cache, no-transform'
     response.headers['X-Accel-Buffering'] = 'no'
     response.headers['Connection'] = 'keep-alive'
     response.headers['Content-Type'] = 'text/event-stream; charset=utf-8'
+
+    # CORS headers for cross-origin support (needed for Render deployments)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+
+    # Disable timeout
     response.timeout = None
 
     return response
