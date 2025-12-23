@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, Response, session
+from flask import Flask, render_template, request, jsonify, send_file, Response, session, stream_with_context
 import json
 from datetime import datetime
 from io import BytesIO
@@ -9,6 +9,7 @@ from utils.pdf_generator import generate_compliance_pdf
 from scorer import calculate_compliance_score
 import secrets
 import threading
+import sys
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -47,18 +48,21 @@ def send_number():
 @app.route("/progress/<session_id>")
 def progress_stream(session_id):
     """Server-Sent Events endpoint for progress updates"""
+    @stream_with_context
     def generate():
         import time
 
         print(f"SSE: Client connected to session {session_id}")
 
-        # Send initial connection message
+        # Send initial connection message and flush
         yield f"data: {json.dumps({'type': 'connected', 'data': {'message': 'Connected to progress stream'}})}\n\n"
+        sys.stdout.flush()
 
         last_index = 0
-        max_wait = 3000  # Maximum 300 seconds (5 minutes) with 0.1s sleep
+        max_wait = 6000  # Maximum 600 seconds (10 minutes) with 0.1s sleep
         wait_count = 0
         no_update_count = 0
+        last_keepalive = 0
 
         while wait_count < max_wait:
             with progress_lock:
@@ -70,6 +74,7 @@ def progress_stream(session_id):
                         for update in updates:
                             print(f"SSE: Sending update: {update['type']}")
                             yield f"data: {json.dumps(update)}\n\n"
+                            sys.stdout.flush()
                             last_index += 1
 
                             # Check if this is the final update
@@ -79,20 +84,28 @@ def progress_stream(session_id):
                     else:
                         no_update_count += 1
 
+            # Send keepalive every 10 seconds to prevent timeout on Render
+            current_time = wait_count * 0.1
+            if current_time - last_keepalive >= 10:
+                print(f"SSE: Sending keepalive for session {session_id} at {current_time}s")
+                yield f": keepalive at {current_time}s\n\n"
+                sys.stdout.flush()
+                last_keepalive = current_time
+
             time.sleep(0.1)
             wait_count += 1
-
-            # Send keepalive every 5 seconds
-            if wait_count % 50 == 0:
-                yield f": keepalive\n\n"
 
         print(f"SSE: Session {session_id} timeout after {wait_count * 0.1}s")
         yield f"data: {json.dumps({'type': 'error', 'data': {'message': 'Session timeout'}})}\n\n"
 
-    return Response(generate(), mimetype='text/event-stream', headers={
-        'Cache-Control': 'no-cache',
-        'X-Accel-Buffering': 'no'
-    })
+    response = Response(generate(), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache, no-transform'
+    response.headers['X-Accel-Buffering'] = 'no'
+    response.headers['Connection'] = 'keep-alive'
+    response.headers['Content-Type'] = 'text/event-stream; charset=utf-8'
+    response.timeout = None
+
+    return response
 
 @app.route("/run_checks", methods=['POST'])
 def run_checks():
